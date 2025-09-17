@@ -51,4 +51,4 @@ try:
 
 finally:
     print('Socket close.')
-    sock.clise()
+    sock.close()
