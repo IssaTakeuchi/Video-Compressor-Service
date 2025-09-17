@@ -27,10 +27,15 @@ while True:
         filesize = int(filesize_str)
 
         # check filesize and send status 1(smaller) or 2(larger)
-        if filesize > pow(2,32):
+        if filesize < pow(2,32):
             status = 1
             status_bytes = str(status).encode('utf-8')
-            connection.sendall(status)
+            connection.sendall(status_bytes)
+
+            #  recieve data in 1400 bytes
+            with open(os.path.join(dpath,"demo"),'wb+') as f:
+                while filesize > 0:
+                    data = connection.recv(1400)
         else:
             status = 2
             status_bytes = str(status).encode('utf-8')
