@@ -27,17 +27,15 @@ try:
     with open(filepath, 'rb') as f:
         filesize = os.path.getsize(filepath)
         
-        # Convert the file size to a string and pad it to a 32 bytes
+        # Convert the file size to a string.
         filesize_str = str(filesize).encode('utf-8')
-        # The ljust method left-justifiles a string to the specified width(32bytes in this case)
-        # and fills any remainig space with the specified character(in this case , the null byte b'\0').
-        # filesize_padded = filesize_str.ljust(32,b'\0')
 
         sock.send(filesize_str)
 
         while True:
-            status = sock.recv(16)
-            if status == 1: # filesize is not error.
+            status_bytes = sock.recv(16)
+            status = status_bytes.decode('utf-8')
+            if status == '1': # filesize is not error.
                 # Send data divided into 1400 byte packets
                 data = f.read(1400)
                 while data:
@@ -45,7 +43,7 @@ try:
                     sock.send(data)
                     data = f.read(1400)
                 sock.close()
-            elif status == 2: # filesize is larger than 4GB.
+            elif status == '2': # filesize is larger than 4GB.
                 status_message = status.decode('utf-8')
                 print("Received status from server: ",status_message)          
 

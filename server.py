@@ -1,8 +1,13 @@
 import socket
+import os
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = '0.0.0.0'
 server_port = 9001
+
+dpath = 'temp'
+if not os.path.exists(dpath):
+    os.makedirs(dpath) 
 
 print('Starting up on {} port {}'.format(server_address, server_port))
 
@@ -33,12 +38,13 @@ while True:
             connection.sendall(status_bytes)
 
             #  recieve data in 1400 bytes
-            with open(os.path.join(dpath,"demo"),'wb+') as f:
+            with open(os.path.join(dpath,filesize_str),'wb+') as f:
                 while filesize > 0:
                     data = connection.recv(1400)
         else:
             status = 2
             status_bytes = str(status).encode('utf-8')
+            connection.sendall(status_bytes)
             # error_message = "Error: File must be below 4GB."
 
 
