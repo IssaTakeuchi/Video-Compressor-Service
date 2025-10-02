@@ -41,11 +41,14 @@ while True:
             with open(os.path.join(dpath,filesize_str),'wb+') as f:
                 while filesize > 0:
                     data = connection.recv(1400)
+                    f.write(data)
+                    filesize -= len(data)
+            print("Finished receiving file from cliient.")
         else:
             status = 2
             status_bytes = str(status).encode('utf-8')
             connection.sendall(status_bytes)
-            # error_message = "Error: File must be below 4GB."
+            print("Error: File must be below 4GB.")
 
 
     finally:
