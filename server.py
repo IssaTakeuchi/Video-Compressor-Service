@@ -1,5 +1,6 @@
 import socket
 import os
+import ffmpeg
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = '0.0.0.0'
@@ -25,20 +26,22 @@ while True:
         print('connection from', client_address)
 
         # receive filesize
-        header = connection.recv(32)
-        filesize_str = header.decode('utf-8')
+        header = connection.recv(8)
+        json_length = int.from_bytes(header[:2],'big')
+        mediatype_length = int.from_bytes(header[2:3],'big')
+        payload_length = int.from_bytes(header[3:8],'big')
 
         # convert string into int
-        filesize = int(filesize_str)
+        filesize = int(payload_length)
 
         # check filesize and send status 1(smaller) or 2(larger)
-        if filesize < pow(2,32):
+        if filesize < pow(2,40):
             status = 1
             status_bytes = str(status).encode('utf-8')
             connection.sendall(status_bytes)
 
             #  recieve data in 1400 bytes
-            with open(os.path.join(dpath,filesize_str),'wb+') as f:
+            with open(os.path.join(dpath,payload_length),'wb+') as f:
                 while filesize > 0:
                     data = connection.recv(1400)
                     f.write(data)
@@ -48,7 +51,7 @@ while True:
             status = 2
             status_bytes = str(status).encode('utf-8')
             connection.sendall(status_bytes)
-            print("Error: File must be below 4GB.")
+            print("Error: File must be below 1TB.")
 
 
     finally:

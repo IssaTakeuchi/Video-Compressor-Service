@@ -1,6 +1,10 @@
 import socket
 import sys
 import os.path
+import json
+
+def protocol_header(json_length, mediatype_length, payload_length):
+    return json_length.to_bytes(2,'big') + mediatype_length.to_bytes(1,'big') + payload_length.to_bytes(5,'big')
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -17,20 +21,26 @@ except socket.error as err:
 
 try:
     filepath = input('Type in a file to upload:')
+    action = input('Type in action : ')
 
     # get filename and extension
     fn, ext = os.path.splitext(filepath)
 
-    if ext != ".mp4" :
-        raise Exception('The file format must be mp4.')
-
+    d = {
+        'action': action,
+        'filename': os.path.basename(filepath),}
+    json_data = json.dumps(d).encode('utf-8')
+    
     with open(filepath, 'rb') as f:
         filesize = os.path.getsize(filepath)
         
-        # Convert the file size to a string.
-        filesize_str = str(filesize).encode('utf-8')
+        # Convert the filesize and extension to a string.
+        filesize_str = filesize.encode('utf-8')
+        ext_bits = ext.encode('utf-8')
 
-        sock.send(filesize_str)
+        header = protocol_header(len(json_data), len(ext_bits), len(filesize_str))
+
+        sock.send(header)
 
         while True:
             status_bytes = sock.recv(16)
@@ -43,7 +53,7 @@ try:
                     sock.send(data)
                     data = f.read(1400)
                 sock.close()
-            elif status == '2': # filesize is larger than 4GB.
+            elif status == '2': # filesize is larger than 1TB.
                 status_message = status.decode('utf-8')
                 print("Received status from server: ",status_message)          
 
