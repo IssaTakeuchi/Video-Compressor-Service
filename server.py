@@ -1,6 +1,8 @@
 import socket
 import os
-import ffmpeg
+import json
+import subprocess
+import ffmpeg_helper
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = '0.0.0.0'
@@ -31,8 +33,16 @@ while True:
         mediatype_length = int.from_bytes(header[2:3],'big')
         payload_length = int.from_bytes(header[3:8],'big')
 
+        json_data = connection.recv(json_length).decode('utf-8')
+        mediatype = connection.recv(mediatype_length).decode('utf-8')
+        payload_size = connection.recv(payload_length).decode('utf-8')
+
         # convert string into int
-        filesize = int(payload_length)
+        filesize = int(payload_size)
+
+        json_dist = json.loads(json_data)
+
+        atcion = json_dist['action']
 
         # check filesize and send status 1(smaller) or 2(larger)
         if filesize < pow(2,40):

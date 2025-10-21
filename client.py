@@ -20,8 +20,8 @@ except socket.error as err:
     sys.exit(1)
 
 try:
-    filepath = input('Type in a file to upload:')
-    action = input('Type in action : ')
+    filepath = input('Type in a file to upload: ')
+    action = input('Type in action: ')
 
     # get filename and extension
     fn, ext = os.path.splitext(filepath)
@@ -34,11 +34,10 @@ try:
     with open(filepath, 'rb') as f:
         filesize = os.path.getsize(filepath)
         
-        # Convert the filesize and extension to a string.
-        filesize_str = filesize.encode('utf-8')
+        filesize_bits = filesize.encode('utf-8')
         ext_bits = ext.encode('utf-8')
 
-        header = protocol_header(len(json_data), len(ext_bits), len(filesize_str))
+        header = protocol_header(len(json_data), len(ext_bits), len(filesize_bits))
 
         sock.send(header)
 
