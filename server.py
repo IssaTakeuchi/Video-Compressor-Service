@@ -42,7 +42,19 @@ while True:
 
         json_dist = json.loads(json_data)
 
-        atcion = json_dist['action']
+        action = json_dist['action']
+        filepath = os.path.join(dpath,json_dist['filename'])
+
+        if action == 'compress':
+            ffmpeg_helper.compression(filepath)
+        elif action == 'resize':
+            ffmpeg_helper.resolution_change(filepath,json_dist['width'],json_dist['height'])
+        elif action == 'aspect':
+            ffmpeg_helper.aspect_ratio_change(filepath,json_dist['aspect_ratio'])
+        elif action == 'toaudio':
+            ffmpeg_helper.convert_to_audio(filepath)
+        elif action == 'gif':
+            ffmpeg_helper.create_GIF(filepath,json_dist['start_time'],json_dist['duration'])
 
         # check filesize and send status 1(smaller) or 2(larger)
         if filesize < pow(2,40):

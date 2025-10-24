@@ -23,12 +23,44 @@ try:
     filepath = input('Type in a file to upload: ')
     action = input('Type in action: ')
 
+    if action == 'compress':
+        d = {
+            'action': action,
+            'filename': os.path.basename(filepath),
+        }
+    elif action == 'resize':
+        width , height = map(int, input('Type in width and height (e.g., 1280 720): ').split())
+        d = {
+            'action': action,
+            'filename': os.path.basename(filepath),
+            'width': width,
+            'height': height
+        }
+    elif action == 'aspect':
+        aspect_ratio = input('Type in aspect ratio (e.g., 16:9):')
+        d = {
+            'action': action,
+            'filename': os.path.basename(filepath),
+            'aspect_ratio': aspect_ratio
+        }
+    elif action == 'toaudio':
+        d = {
+            'action': action,
+            'filename': os.path.basename(filepath),
+        }
+    elif action == 'gif':
+        starttime , duration = map(int, input('Type in start time and duration (e.g., 5 10): ').split())
+        d = {
+            'action': action,
+            'filename': os.path.basename(filepath),
+            'start_time': starttime,
+            'duration': duration
+        }
+    
+
     # get filename and extension
     fn, ext = os.path.splitext(filepath)
 
-    d = {
-        'action': action,
-        'filename': os.path.basename(filepath),}
     json_data = json.dumps(d).encode('utf-8')
     
     with open(filepath, 'rb') as f:
