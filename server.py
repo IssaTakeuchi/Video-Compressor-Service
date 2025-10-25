@@ -27,7 +27,6 @@ while True:
     try:
         print('connection from', client_address)
 
-        # receive filesize
         header = connection.recv(8)
         json_length = int.from_bytes(header[:2],'big')
         mediatype_length = int.from_bytes(header[2:3],'big')
@@ -35,15 +34,26 @@ while True:
 
         json_data = connection.recv(json_length).decode('utf-8')
         mediatype = connection.recv(mediatype_length).decode('utf-8')
-        payload_size = connection.recv(payload_length).decode('utf-8')
-
-        # convert string into int
-        filesize = int(payload_size)
 
         json_dist = json.loads(json_data)
 
+        full_filename = json_dist['filename'] + mediatype
+
+        filepath = os.path.join(dpath, full_filename)
+
+        byte_remaining = payload_length # Initialized as the remaining number of received bytes
+
+        #  recieve data in 1400 bytes
+        with open(filepath,'wb+') as f:
+            print(f"Start receiving file from client: {json_dist['filename']}")
+            while byte_remaining > 0:
+                byte_min = min(1400, byte_remaining)
+                data = connection.recv(byte_min)
+                f.write(data)
+                byte_remaining -= len(data)
+        print("Finished receiving file from cliient.")
+
         action = json_dist['action']
-        filepath = os.path.join(dpath,json_dist['filename'])
 
         if action == 'compress':
             ffmpeg_helper.compression(filepath)
@@ -55,25 +65,6 @@ while True:
             ffmpeg_helper.convert_to_audio(filepath)
         elif action == 'gif':
             ffmpeg_helper.create_GIF(filepath,json_dist['start_time'],json_dist['duration'])
-
-        # check filesize and send status 1(smaller) or 2(larger)
-        if filesize < pow(2,40):
-            status = 1
-            status_bytes = str(status).encode('utf-8')
-            connection.sendall(status_bytes)
-
-            #  recieve data in 1400 bytes
-            with open(os.path.join(dpath,payload_length),'wb+') as f:
-                while filesize > 0:
-                    data = connection.recv(1400)
-                    f.write(data)
-                    filesize -= len(data)
-            print("Finished receiving file from cliient.")
-        else:
-            status = 2
-            status_bytes = str(status).encode('utf-8')
-            connection.sendall(status_bytes)
-            print("Error: File must be below 1TB.")
 
 
     finally:
