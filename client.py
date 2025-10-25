@@ -79,12 +79,33 @@ try:
 
         sock.send(ext_bits)
 
-        while True:
+        data = f.read(1400)
+        while data:
+            sock.send(data)
             data = f.read(1400)
-            while data:
-                sock.send(data)
-                data = f.read(1400)
-            sock.close()  
+    print("File upload completed.")
+
+    header = sock.recv(8)
+    json_length = int.from_bytes(header[:2],'big')
+    mediatype_length = int.from_bytes(header[2:3],'big')
+    payload_length = int.from_bytes(header[3:8],'big')
+
+    json_data = sock.recv(json_length).decode('utf-8')
+    mediatype = sock.recv(mediatype_length).decode('utf-8')
+
+    json_dist = json.loads(json_data)
+
+    full_filename = json_dist['filename'] + mediatype
+
+    byte_remaining = payload_length
+    with open(full_filename,'wb+') as f:
+        print(f"Start receiving file from server: {full_filename}")
+        while byte_remaining > 0:
+            byte_min = min(1400, byte_remaining)
+            data = sock.recv(byte_min)
+            f.write(data)
+            byte_remaining -= len(data)
+    print("Finished receiving file from server.")
 
 finally:
     print('Socket close.')

@@ -29,7 +29,8 @@ def compression(input_file, crf=22):
         '-y', # 既存のファイルがあった場合に上書きするオプション
         output_file
     ]
-    return run_ffmpeg_command(command_line)
+    if run_ffmpeg_command(command_line) : 
+        return output_file
 
 # 解像度変更
 def resolution_change(input_file, width, height):
@@ -43,7 +44,8 @@ def resolution_change(input_file, width, height):
         '-y', # 既存のファイルがあった場合に上書きするオプション
         output_file
     ]
-    return run_ffmpeg_command(command_line)
+    if run_ffmpeg_command(command_line) : 
+        return output_file
 
 # アスペクト比変更
 def aspect_ratio_change(input_file, aspect_ratio):
@@ -57,7 +59,8 @@ def aspect_ratio_change(input_file, aspect_ratio):
         '-y', # 既存のファイルがあった場合に上書きするオプション
         output_file
     ]
-    return run_ffmpeg_command(command_line)
+    if run_ffmpeg_command(command_line) : 
+        return output_file
 
 # 音声変換
 def convert_to_audio(input_file):
@@ -74,7 +77,8 @@ def convert_to_audio(input_file):
         '-y', # 既存のファイルがあった場合に上書きするオプション
         output_file
     ]
-    return run_ffmpeg_command(command_line)
+    if run_ffmpeg_command(command_line) : 
+        return output_file
 
 # 時間を指定してGIF作成
 def create_GIF(input_file, start_time, duration):
@@ -91,4 +95,5 @@ def create_GIF(input_file, start_time, duration):
         '-y', # 既存のファイルがあった場合に上書きするオプション
         output_file
     ]
-    return run_ffmpeg_command(command_line)
+    if run_ffmpeg_command(command_line) : 
+        return output_file

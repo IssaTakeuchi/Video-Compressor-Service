@@ -4,6 +4,9 @@ import json
 import subprocess
 import ffmpeg_helper
 
+def protocol_header(json_length, mediatype_length, payload_length):
+    return json_length.to_bytes(2,'big') + mediatype_length.to_bytes(1,'big') + payload_length.to_bytes(5,'big')
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = '0.0.0.0'
 server_port = 9001
@@ -56,15 +59,36 @@ while True:
         action = json_dist['action']
 
         if action == 'compress':
-            ffmpeg_helper.compression(filepath)
+            output_file = ffmpeg_helper.compression(filepath)
         elif action == 'resize':
-            ffmpeg_helper.resolution_change(filepath,json_dist['width'],json_dist['height'])
+            output_file = ffmpeg_helper.resolution_change(filepath,json_dist['width'],json_dist['height'])
         elif action == 'aspect':
-            ffmpeg_helper.aspect_ratio_change(filepath,json_dist['aspect_ratio'])
+            output_file =ffmpeg_helper.aspect_ratio_change(filepath,json_dist['aspect_ratio'])
         elif action == 'toaudio':
-            ffmpeg_helper.convert_to_audio(filepath)
+            output_file =ffmpeg_helper.convert_to_audio(filepath)
         elif action == 'gif':
-            ffmpeg_helper.create_GIF(filepath,json_dist['start_time'],json_dist['duration'])
+            output_file =ffmpeg_helper.create_GIF(filepath,json_dist['start_time'],json_dist['duration'])
+
+        if output_file:
+            fn , ext = os.path.splitext(output_file)
+            filesize = os.path.getsize(output_file)
+            d = {
+                'filename': fn,
+            }
+            json_data = json.dumps(d).encode('utf-8')
+            ext_bits = ext.encode('utf-8')
+            header = protocol_header(len(json_data), len(ext_bits), filesize)
+
+            connection.send(header)
+            connection.send(json_data)
+            connection.send(ext_bits)
+
+            with open(output_file,'rb') as f:
+                while True:
+                    data = f.read(1400)
+                    if not data:
+                        break
+                    connection.send(data) 
 
 
     finally:
