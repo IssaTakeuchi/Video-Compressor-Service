@@ -59,19 +59,30 @@ while True:
         action = json_dist['action']
 
         if action == 'compress':
-            output_file = ffmpeg_helper.compression(filepath)
+            output_file = 'Compressed_' + full_filename
+            outpath = os.path.join(dpath,output_file)
+            outfile_path = ffmpeg_helper.compression(filepath,outpath)
         elif action == 'resize':
-            output_file = ffmpeg_helper.resolution_change(filepath,json_dist['width'],json_dist['height'])
+            output_file = 'Resized_' + full_filename
+            outpath =  os.path.join(dpath,output_file)
+            outfile_path = ffmpeg_helper.resolution_change(filepath,json_dist['width'],json_dist['height'],outpath)
         elif action == 'aspect':
-            output_file =ffmpeg_helper.aspect_ratio_change(filepath,json_dist['aspect_ratio'])
+            output_file = 'Aspect_' + full_filename
+            outpath =  os.path.join(dpath,output_file)
+            outfile_path =ffmpeg_helper.aspect_ratio_change(filepath,json_dist['aspect_ratio'],outpath)
         elif action == 'toaudio':
-            output_file =ffmpeg_helper.convert_to_audio(filepath)
+            output_file = 'Audio_' + os.path.splitext(full_filename)[0] + '.mp3'
+            outpath =  os.path.join(dpath,output_file)
+            outfile_path =ffmpeg_helper.convert_to_audio(filepath,outpath)
         elif action == 'gif':
-            output_file =ffmpeg_helper.create_GIF(filepath,json_dist['start_time'],json_dist['duration'])
+            output_file = 'GIF_' + os.path.splitext(full_filename)[0] + '.gif'
+            outpath =  os.path.join(dpath,output_file)
+            outfile_path =ffmpeg_helper.create_GIF(filepath,json_dist['start_time'],json_dist['duration'],outpath)
 
-        if output_file:
-            fn , ext = os.path.splitext(output_file)
-            filesize = os.path.getsize(output_file)
+        if outfile_path:
+            basename = os.path.basename(outfile_path)
+            fn , ext = os.path.splitext(basename)
+            filesize = os.path.getsize(outfile_path)
             d = {
                 'filename': fn,
             }
@@ -83,12 +94,19 @@ while True:
             connection.send(json_data)
             connection.send(ext_bits)
 
-            with open(output_file,'rb') as f:
+            with open(outfile_path,'rb') as f:
                 while True:
                     data = f.read(1400)
                     if not data:
+                        print("File send completed.")
                         break
-                    connection.send(data) 
+                    connection.send(data)
+        
+        try: 
+            os.remove(filepath)
+            os.remove(outfile_path)
+        except FileNotFoundError:
+            pass
 
 
     finally:

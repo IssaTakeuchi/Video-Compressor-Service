@@ -21,7 +21,7 @@ except socket.error as err:
 
 try:
     filepath = input('Type in a file to upload: ')
-    action = input('Type in action: ')
+    action = input('Type in action (compress, resize, aspect, toaudio, gif): ')
     
     # get filename and extension
     filepath_with_ext = os.path.basename(filepath)

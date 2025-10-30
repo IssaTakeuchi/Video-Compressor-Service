@@ -16,58 +16,44 @@ def run_ffmpeg_command(command_line):
         return False
 
 # 動画圧縮
-def compression(input_file, crf=22):
-
-    filename = os.path.basename(input_file)
-    output_file = f'compressed_ {filename}'
-
+def compression(input_file, outputpath):
     command_line = [
         'ffmpeg',
         '-i', input_file,
         '-vcodec', 'libx265',
-        '-crf', str(crf),
+        '-crf', '22',
         '-y', # 既存のファイルがあった場合に上書きするオプション
-        output_file
+        outputpath
     ]
     if run_ffmpeg_command(command_line) : 
-        return output_file
+        return outputpath
 
 # 解像度変更
-def resolution_change(input_file, width, height):
-    filename = os.path.basename(input_file)
-    output_file = f'resized_{filename}'
-
+def resolution_change(input_file, width, height,outputpath):
     command_line = [
         'ffmpeg',
         '-i', input_file,
         '-vf', f'scale={width}:{height}',
         '-y', # 既存のファイルがあった場合に上書きするオプション
-        output_file
+        outputpath
     ]
     if run_ffmpeg_command(command_line) : 
-        return output_file
+        return outputpath
 
 # アスペクト比変更
-def aspect_ratio_change(input_file, aspect_ratio):
-    filename = os.path.basename(input_file)
-    output_file = f'aspect_{filename}'
-
+def aspect_ratio_change(input_file, aspect_ratio,outputpath):
     command_line = [
         'ffmpeg',
         '-i', input_file,
         '-aspect', aspect_ratio,
         '-y', # 既存のファイルがあった場合に上書きするオプション
-        output_file
+        outputpath
     ]
     if run_ffmpeg_command(command_line) : 
-        return output_file
+        return outputpath
 
 # 音声変換
-def convert_to_audio(input_file):
-    filename = os.path.basename(input_file)
-    name, _ = os.path.splitext(filename)
-    output_file = f'{name}.mp3'
-
+def convert_to_audio(input_file,outputpath):
     command_line = [
         'ffmpeg',
         '-i', input_file,
@@ -75,17 +61,13 @@ def convert_to_audio(input_file):
         '-ac', '2', 
         '-b:a', '192k',
         '-y', # 既存のファイルがあった場合に上書きするオプション
-        output_file
+        outputpath
     ]
     if run_ffmpeg_command(command_line) : 
-        return output_file
+        return outputpath
 
 # 時間を指定してGIF作成
-def create_GIF(input_file, start_time, duration):
-    filename = os.path.basename(input_file)
-    name, _ = os.path.splitext(filename)
-    output_file = f'{name}.gif'
-
+def create_GIF(input_file, start_time, duration,outputpath):
     command_line = [
         'ffmpeg',
         '-i', input_file,
@@ -93,7 +75,7 @@ def create_GIF(input_file, start_time, duration):
         '-t', str(duration),
         '-vf', 'fps=10,scale=320:-1:flags=lanczos',
         '-y', # 既存のファイルがあった場合に上書きするオプション
-        output_file
+        outputpath
     ]
     if run_ffmpeg_command(command_line) : 
-        return output_file
+        return outputpath
