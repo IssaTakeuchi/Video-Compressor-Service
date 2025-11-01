@@ -20,8 +20,21 @@ except socket.error as err:
     sys.exit(1)
 
 try:
-    filepath = input('Type in a file to upload: ')
-    action = input('Type in action (compress, resize, aspect, toaudio, gif): ')
+    while True:
+        filepath = input('Type in a file to upload: ')
+        if os.path.exists(filepath):
+            break
+        else:
+            print('File does not exist. Please try again.')
+                      
+
+    VALID_ACTIONS = ['compress', 'resize', 'aspect', 'toaudio', 'gif']
+    while True:
+        action = input('Type in action (compress, resize, aspect, toaudio, gif): ')
+        if action in VALID_ACTIONS:
+            break
+        else:
+            print('Invalid action. Please try again.')
     
     # get filename and extension
     filepath_with_ext = os.path.basename(filepath)
@@ -59,7 +72,7 @@ try:
             'filename': fn,
             'start_time': starttime,
             'duration': duration
-        }   
+        }
 
     json_data = json.dumps(d).encode('utf-8')
     
