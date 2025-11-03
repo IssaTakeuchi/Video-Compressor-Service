@@ -3,6 +3,8 @@ import sys
 import os.path
 import json
 
+# ヘッダーのフォーマットを定義する関数
+# JSON長: 2バイト, メディアタイプ長: 1バイト, ペイロード長: 5バイト
 def protocol_header(json_length, mediatype_length, payload_length):
     return json_length.to_bytes(2,'big') + mediatype_length.to_bytes(1,'big') + payload_length.to_bytes(5,'big')
 
@@ -20,6 +22,7 @@ except socket.error as err:
     sys.exit(1)
 
 try:
+    #　存在するファイル名を入力するまで繰り返す
     while True:
         filepath = input('Type in a file to upload: ')
         if os.path.exists(filepath):
@@ -27,7 +30,7 @@ try:
         else:
             print('File does not exist. Please try again.')
                       
-
+    # これらのうちのいずれかのアクションを選択するまで繰り返す
     VALID_ACTIONS = ['compress', 'resize', 'aspect', 'toaudio', 'gif']
     while True:
         action = input('Type in action (compress, resize, aspect, toaudio, gif): ')
@@ -36,7 +39,8 @@ try:
         else:
             print('Invalid action. Please try again.')
     
-    # get filename and extension
+    # os.path.basename() でパスを除去し、os.path.splitext() で拡張子を分離
+    # 例: "temp/video1.mp4" -> "video1", ".mp4"
     filepath_with_ext = os.path.basename(filepath)
     fn, ext = os.path.splitext(filepath_with_ext)
 
@@ -76,6 +80,8 @@ try:
 
     json_data = json.dumps(d).encode('utf-8')
     
+    # ファイルを読み込み、サーバーに送信する
+    # ファイルサイズが1TB未満であることを確認し、1400バイトずつ送信する
     with open(filepath, 'rb') as f:
         filesize = os.path.getsize(filepath)
 
@@ -98,6 +104,8 @@ try:
             data = f.read(1400)
     print("File upload completed.")
 
+
+    # サーバーからのレスポンスを受信処理
     header = sock.recv(8)
     json_length = int.from_bytes(header[:2],'big')
     mediatype_length = int.from_bytes(header[2:3],'big')
@@ -110,6 +118,7 @@ try:
 
     full_filename = json_dist['filename'] + mediatype
 
+    # ぺイロード長を記憶させておいて、1400バイトずつ受信しながらファイルを書き込む
     byte_remaining = payload_length
     with open(full_filename,'wb+') as f:
         print(f"Start receiving file from server: {full_filename}")
