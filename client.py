@@ -3,6 +3,8 @@ import sys
 import os.path
 import json
 
+# ヘッダーのフォーマットを定義する関数
+# JSON長: 2バイト, メディアタイプ長: 1バイト, ペイロード長: 5バイト
 def protocol_header(json_length, mediatype_length, payload_length):
     return json_length.to_bytes(2,'big') + mediatype_length.to_bytes(1,'big') + payload_length.to_bytes(5,'big')
 
@@ -20,42 +22,112 @@ except socket.error as err:
     sys.exit(1)
 
 try:
-    filepath = input('Type in a file to upload:')
-    action = input('Type in action : ')
+    #　存在するファイル名を入力するまで繰り返す
+    while True:
+        filepath = input('Type in a file to upload: ')
+        if os.path.exists(filepath):
+            break
+        else:
+            print('File does not exist. Please try again.')
+                      
+    # これらのうちのいずれかのアクションを選択するまで繰り返す
+    VALID_ACTIONS = ['compress', 'resize', 'aspect', 'toaudio', 'gif']
+    while True:
+        action = input('Type in action (compress, resize, aspect, toaudio, gif): ')
+        if action in VALID_ACTIONS:
+            break
+        else:
+            print('Invalid action. Please try again.')
+    
+    # os.path.basename() でパスを除去し、os.path.splitext() で拡張子を分離
+    # 例: "temp/video1.mp4" -> "video1", ".mp4"
+    filepath_with_ext = os.path.basename(filepath)
+    fn, ext = os.path.splitext(filepath_with_ext)
 
-    # get filename and extension
-    fn, ext = os.path.splitext(filepath)
+    if action == 'compress':
+        d = {
+            'action': action,
+            'filename': fn,
+        }
+    elif action == 'resize':
+        width , height = map(int, input('Type in width and height (e.g., 1280 720): ').split())
+        d = {
+            'action': action,
+            'filename': fn,
+            'width': width,
+            'height': height
+        }
+    elif action == 'aspect':
+        aspect_ratio = input('Type in aspect ratio (e.g., 16:9):')
+        d = {
+            'action': action,
+            'filename': fn,
+            'aspect_ratio': aspect_ratio
+        }
+    elif action == 'toaudio':
+        d = {
+            'action': action,
+            'filename': fn,
+        }
+    elif action == 'gif':
+        starttime , duration = map(int, input('Type in start time and duration (e.g., 5 10): ').split())
+        d = {
+            'action': action,
+            'filename': fn,
+            'start_time': starttime,
+            'duration': duration
+        }
 
-    d = {
-        'action': action,
-        'filename': os.path.basename(filepath),}
     json_data = json.dumps(d).encode('utf-8')
     
+    # ファイルを読み込み、サーバーに送信する
+    # ファイルサイズが1TB未満であることを確認し、1400バイトずつ送信する
     with open(filepath, 'rb') as f:
         filesize = os.path.getsize(filepath)
+
+        if filesize >= pow(2,40):
+            raise Exception("File size must be below 1TB.")
         
-        # Convert the filesize and extension to a string.
-        filesize_str = filesize.encode('utf-8')
         ext_bits = ext.encode('utf-8')
 
-        header = protocol_header(len(json_data), len(ext_bits), len(filesize_str))
+        header = protocol_header(len(json_data), len(ext_bits), filesize)
 
         sock.send(header)
 
-        while True:
-            status_bytes = sock.recv(16)
-            status = status_bytes.decode('utf-8')
-            if status == '1': # filesize is not error.
-                # Send data divided into 1400 byte packets
-                data = f.read(1400)
-                while data:
-                    print("sending...")
-                    sock.send(data)
-                    data = f.read(1400)
-                sock.close()
-            elif status == '2': # filesize is larger than 1TB.
-                status_message = status.decode('utf-8')
-                print("Received status from server: ",status_message)          
+        sock.send(json_data)
+
+        sock.send(ext_bits)
+
+        data = f.read(1400)
+        while data:
+            sock.send(data)
+            data = f.read(1400)
+    print("File upload completed.")
+
+
+    # サーバーからのレスポンスを受信処理
+    header = sock.recv(8)
+    json_length = int.from_bytes(header[:2],'big')
+    mediatype_length = int.from_bytes(header[2:3],'big')
+    payload_length = int.from_bytes(header[3:8],'big')
+
+    json_data = sock.recv(json_length).decode('utf-8')
+    mediatype = sock.recv(mediatype_length).decode('utf-8')
+
+    json_dist = json.loads(json_data)
+
+    full_filename = json_dist['filename'] + mediatype
+
+    # ぺイロード長を記憶させておいて、1400バイトずつ受信しながらファイルを書き込む
+    byte_remaining = payload_length
+    with open(full_filename,'wb+') as f:
+        print(f"Start receiving file from server: {full_filename}")
+        while byte_remaining > 0:
+            byte_min = min(1400, byte_remaining)
+            data = sock.recv(byte_min)
+            f.write(data)
+            byte_remaining -= len(data)
+    print("Finished receiving file from server.")
 
 finally:
     print('Socket close.')
